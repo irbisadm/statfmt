@@ -33,6 +33,55 @@ section for details and the relevant environment variables
 - **Document intentional deviations from ReadStat** in code comments, so they are
   not later "fixed" back into a bug.
 
+## Commit convention
+
+This project uses [**Conventional Commits**](https://www.conventionalcommits.org/).
+This is not just style: **releases are fully automated from the commit messages**
+by [semantic-release](https://github.com/semantic-release/semantic-release). On
+every push to `main`, the next version number, the git tag, the GitHub release
+and the `CHANGELOG.md` entry are all derived from the commits. Malformed messages
+break that pipeline, so commit messages are linted with commitlint in CI.
+
+Format:
+
+```
+<type>(<optional scope>): <description>
+
+[optional body]
+
+[optional footer(s)]
+```
+
+Types and their effect on a release:
+
+| Type | Changelog section | Version bump |
+| --- | --- | --- |
+| `feat` | Features | minor |
+| `fix` | Bug Fixes | patch |
+| `perf` | Performance Improvements | patch |
+| `docs`, `test`, `refactor`, `build`, `ci`, `chore`, `style` | — | none |
+
+A **breaking change** bumps the major version: add `!` after the type/scope
+(`feat(sav)!: …`) or a `BREAKING CHANGE:` footer.
+
+Scopes track the area of the port: `core`, `sav`, `zsav`, `por`, `dta`, `sas`,
+`txt`, `api`, `e2e`, `ci`, `release`.
+
+Keep the **description** short and imperative; put detail (e.g. "validated against
+the reference C library") in the body.
+
+Examples:
+
+```
+feat(dta): support Stata 14 business calendars
+fix(sav): handle zero-length string variables
+docs: clarify encoding options in the README
+
+feat(api)!: rename readPor `inputEncoding` option to `encoding`
+
+BREAKING CHANGE: `inputEncoding` is now `encoding` across all readers.
+```
+
 ## Attribution
 
 Substantial portions of this codebase are derived from ReadStat. If your change

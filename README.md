@@ -3,6 +3,8 @@
 [![npm](https://img.shields.io/npm/v/@irbisadm/readstat-ts.svg)](https://www.npmjs.com/package/@irbisadm/readstat-ts)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![types](https://img.shields.io/badge/types-TypeScript-blue.svg)](#)
+[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
+[![semantic-release](https://img.shields.io/badge/%20%20%F0%9F%93%A6%F0%9F%9A%80-semantic--release-e10079.svg)](https://github.com/semantic-release/semantic-release)
 
 Read and write statistical data files from **SPSS**, **Stata**, and **SAS** in
 pure TypeScript — no native addons, no WASM, no system libraries.
@@ -236,6 +238,13 @@ Issues and pull requests are welcome — see [CONTRIBUTING.md](./CONTRIBUTING.md
 Any change to a format must keep the end-to-end suite green (`npm run test:e2e`).
 Improvements to binary-format fidelity that also benefit upstream should be
 offered to [ReadStat](https://github.com/WizardMac/ReadStat) as well.
+
+Commits follow [Conventional Commits](https://www.conventionalcommits.org/), and
+**releases are fully automated**: pushing to `main` runs
+[semantic-release](https://github.com/semantic-release/semantic-release), which
+computes the next version, tags it, updates the changelog and publishes to npm —
+all derived from the commit messages. See
+[CONTRIBUTING.md](./CONTRIBUTING.md#commit-convention) for the format.
 
 ## License
 
