@@ -1,0 +1,44 @@
+name: Release
+
+on:
+  push:
+    branches: [main]
+
+# semantic-release needs to push the changelog/version commit and the tag,
+# open/annotate the GitHub release, and (with provenance) mint an OIDC token.
+permissions:
+  contents: write
+  issues: write
+  pull-requests: write
+  id-token: write
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+jobs:
+  release:
+    name: semantic-release
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          registry-url: https://registry.npmjs.org
+      - name: Install reference build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential zlib1g-dev
+      - run: npm install
+      - run: npm run build
+      # Never publish a broken build: the full suite (incl. the ReadStat
+      # end-to-end cross-validation) must pass before a release is cut.
+      - run: npm test
+      - name: Release
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
+          NPM_CONFIG_PROVENANCE: "true"
+        run: npx semantic-release

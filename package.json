@@ -1,6 +1,6 @@
 {
   "name": "@irbisadm/readstat-ts",
-  "version": "0.1.0",
+  "version": "0.0.0-development",
   "description": "TypeScript port of ReadStat — read and write SPSS (.sav/.zsav/.por), Stata (.dta), and SAS (.sas7bdat/.sas7bcat/.xpt) data files. No native dependencies.",
   "type": "module",
   "main": "./dist/index.js",
@@ -23,6 +23,8 @@
     "test": "vitest run",
     "test:e2e": "vitest run test/e2e",
     "test:watch": "vitest",
+    "commitlint": "commitlint",
+    "release": "semantic-release",
     "prepublishOnly": "npm run clean && npm run build"
   },
   "keywords": [
@@ -44,7 +46,14 @@
   },
   "engines": { "node": ">=18" },
   "devDependencies": {
+    "@commitlint/cli": "^19.5.0",
+    "@commitlint/config-conventional": "^19.5.0",
+    "@semantic-release/changelog": "^6.0.3",
+    "@semantic-release/git": "^10.0.1",
+    "@semantic-release/github": "^11.0.0",
     "@types/node": "^20.11.0",
+    "conventional-changelog-conventionalcommits": "^8.0.0",
+    "semantic-release": "^24.2.0",
     "typescript": "^5.4.0",
     "vitest": "^1.6.0"
   }

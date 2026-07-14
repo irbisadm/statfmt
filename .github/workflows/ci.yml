@@ -1,0 +1,45 @@
+name: CI
+
+on:
+  push:
+    branches-ignore: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    name: typecheck · build · test
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      # ReadStat (built from source for the end-to-end tests) needs a C
+      # toolchain and zlib; iconv ships with glibc.
+      - name: Install reference build dependencies
+        run: sudo apt-get update && sudo apt-get install -y build-essential zlib1g-dev
+      - run: npm install
+      - run: npm run typecheck
+      - run: npm run build
+      - run: npm test
+
+  commitlint:
+    name: lint commit messages
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm install
+      - name: Validate PR commit messages
+        run: >
+          npx commitlint
+          --from "${{ github.event.pull_request.base.sha }}"
+          --to "${{ github.event.pull_request.head.sha }}"
