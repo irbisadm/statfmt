@@ -31,3 +31,31 @@ export type {
   ProgressHandler,
 } from "./parser.js";
 export { Writer, stringRefInit, type StringRef, type WriterModuleCallbacks } from "./writer.js";
+
+// Streaming format entry points (low-level)
+export { parseSav } from "./spss/sav-read.js";
+export { beginWritingSav } from "./spss/sav-write.js";
+export { parseDta } from "./stata/dta-read.js";
+export { beginWritingDta } from "./stata/dta-write.js";
+
+// High-level API
+export {
+  readData,
+  readSav,
+  readDta,
+  detectFormat,
+  writeData,
+  writeSav,
+  writeZsav,
+  writeDta,
+  type Dataset,
+  type DatasetVariable,
+  type CellValue,
+  type ValueLabelPair,
+  type ReadableFormat,
+  type WritableFormat,
+  type ReadOptions,
+  type WriteSpec,
+  type WriteVariable,
+  type WriteValueLabel,
+} from "./highlevel.js";
