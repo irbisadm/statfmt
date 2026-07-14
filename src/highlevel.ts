@@ -17,6 +17,7 @@ import { Writer } from "./writer.js";
 import { LabelSet } from "./labelset.js";
 import { parseSav } from "./spss/sav-read.js";
 import { beginWritingSav } from "./spss/sav-write.js";
+import { parsePor } from "./spss/por-read.js";
 import { parseDta } from "./stata/dta-read.js";
 import { beginWritingDta } from "./stata/dta-write.js";
 
@@ -59,6 +60,7 @@ const PARSERS: Partial<Record<ReadableFormat, ParseFn>> = {
   sav: parseSav,
   zsav: parseSav,
   dta: parseDta,
+  por: parsePor,
 };
 
 export interface ReadOptions {
