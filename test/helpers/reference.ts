@@ -8,17 +8,40 @@
 import { execFileSync } from "node:child_process";
 import { mkdtempSync, writeFileSync, readFileSync, existsSync, rmSync } from "node:fs";
 import { tmpdir } from "node:os";
-import { join } from "node:path";
+import { join, dirname } from "node:path";
+import { fileURLToPath } from "node:url";
+
+const REPO_ROOT = join(dirname(fileURLToPath(import.meta.url)), "..", "..");
+
+/** Durable location produced by `npm run build:reference`. */
+export const REFERENCE_BUILD_PATH = join(REPO_ROOT, ".reference", "ReadStat", "readstat");
 
 const CANDIDATES = [
   process.env.READSTAT_BIN,
-  "/tmp/claude-1000/-home-irbisadm-IdeaProjects-spss/8226504e-c7f2-4249-ab93-bd6e73342c79/scratchpad/ReadStat/readstat",
+  REFERENCE_BUILD_PATH,
 ].filter(Boolean) as string[];
 
-export const REFERENCE_BIN = CANDIDATES.find((p) => existsSync(p)) ?? null;
+/** Resolved lazily so a build triggered by globalSetup is picked up. */
+export function resolveReferenceBin(): string | null {
+  return CANDIDATES.find((p) => existsSync(p)) ?? null;
+}
+
+export const REFERENCE_BIN = resolveReferenceBin();
 
 export function hasReference(): boolean {
-  return REFERENCE_BIN !== null;
+  return resolveReferenceBin() !== null;
+}
+
+/** Throw with actionable guidance if the reference CLI is not available. */
+export function requireReference(): string {
+  const bin = resolveReferenceBin();
+  if (!bin) {
+    throw new Error(
+      "reference readstat binary not available — run `npm run build:reference` " +
+        "(needs a C compiler, make, zlib and iconv) or set READSTAT_BIN to a built CLI.",
+    );
+  }
+  return bin;
 }
 
 export function makeTmpDir(): string {

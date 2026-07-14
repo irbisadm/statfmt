@@ -125,6 +125,35 @@ const schema = new Uint8Array(await readFile("layout.dct"));
 const ds = readTxt(data, schema, "stata"); // "stata" | "spss" | "sas"
 ```
 
+## Testing & end-to-end validation
+
+Unit tests run with no external dependencies:
+
+```bash
+npm test
+```
+
+The suite also includes an **end-to-end layer that cross-validates against the
+real ReadStat C library** for every format, in both directions:
+
+- **generation** — the TS writer produces each format, and the reference
+  `readstat` CLI reads it back with exactly the right variable names, values and
+  metadata (`test/e2e/write.e2e.test.ts`);
+- **reading** — the reference CLI produces a genuine file in each format, and the
+  TS reader parses it (`test/e2e/read.e2e.test.ts`);
+- **structural round-trip** — variable/value labels and user-defined missing
+  ranges survive a TS → C → TS round-trip (`test/e2e/roundtrip.e2e.test.ts`).
+
+The reference CLI is built automatically on first run (pinned to ReadStat
+v1.1.9) into `.reference/` — a C compiler, `make`, zlib and iconv are required.
+Build it explicitly, or point at an existing binary:
+
+```bash
+npm run build:reference          # clone/download + build into .reference/
+READSTAT_BIN=/path/to/readstat npm test
+npm run test:e2e                 # e2e layer only
+```
+
 ## Character encodings
 
 Decoding uses the platform `TextDecoder`, which covers the encodings SPSS/SAS/Stata

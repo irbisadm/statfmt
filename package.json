@@ -16,8 +16,10 @@
   "files": ["dist", "README.md", "LICENSE"],
   "scripts": {
     "build": "tsc -p tsconfig.build.json",
+    "build:reference": "bash scripts/build-reference.sh",
     "typecheck": "tsc --noEmit",
     "test": "vitest run",
+    "test:e2e": "vitest run test/e2e",
     "test:watch": "vitest"
   },
   "keywords": [

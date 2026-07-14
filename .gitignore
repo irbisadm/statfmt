@@ -3,3 +3,4 @@ dist/
 *.log
 test/tmp/
 .DS_Store
+.reference/
