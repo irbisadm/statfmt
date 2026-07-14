@@ -17,11 +17,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+          cache: npm
       # ReadStat (built from source for the end-to-end tests) needs a C
       # toolchain and zlib; iconv ships with glibc.
       - name: Install reference build dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential zlib1g-dev
-      - run: npm install
+      - run: npm ci
       - run: npm run typecheck
       - run: npm run build
       - run: npm test
@@ -37,9 +38,44 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
-      - run: npm install
+          cache: npm
+      - run: npm ci
       - name: Validate PR commit messages
         run: >
           npx commitlint
           --from "${{ github.event.pull_request.base.sha }}"
           --to "${{ github.event.pull_request.head.sha }}"
+
+  preview-release:
+    name: preview next version (dry-run)
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # Check out the PR head branch by name so semantic-release can treat it as
+      # a release branch and compute the version it *would* publish once merged.
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ github.event.pull_request.head.repo.full_name }}
+          ref: ${{ github.event.pull_request.head.ref }}
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+      - run: npm ci
+      - name: semantic-release --dry-run
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          HEAD_REF: ${{ github.event.pull_request.head.ref }}
+        run: |
+          set -o pipefail
+          npx semantic-release --dry-run --no-ci --branches "$HEAD_REF" 2>&1 | tee sr.log || true
+          ver=$(grep -oE 'next release version is [0-9]+\.[0-9]+\.[0-9]+' sr.log \
+                | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1 || true)
+          if [ -n "$ver" ]; then
+            echo "### 📦 This PR would release \`v$ver\`" >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "### 📦 No release: these commits don't trigger a version bump" >> "$GITHUB_STEP_SUMMARY"
+          fi
