@@ -21,6 +21,8 @@ import { parsePor } from "./spss/por-read.js";
 import { beginWritingPor } from "./spss/por-write.js";
 import { parseDta } from "./stata/dta-read.js";
 import { beginWritingDta } from "./stata/dta-write.js";
+import { parseXport } from "./sas/xport-read.js";
+import { beginWritingXport } from "./sas/xport-write.js";
 
 export type CellValue = number | string | null;
 
@@ -62,6 +64,7 @@ const PARSERS: Partial<Record<ReadableFormat, ParseFn>> = {
   zsav: parseSav,
   dta: parseDta,
   por: parsePor,
+  xport: parseXport,
 };
 
 export interface ReadOptions {
@@ -181,6 +184,12 @@ export function detectFormat(data: Uint8Array): ReadableFormat | null {
     if (m4 === "$FL3") return "zsav";
     if (m4 === "<sta") return "dta";
   }
+  // XPORT: begins with "HEADER RECORD"
+  if (b.length >= 13) {
+    let hdr = "";
+    for (let i = 0; i < 13; i++) hdr += String.fromCharCode(b[i]);
+    if (hdr === "HEADER RECORD") return "xport";
+  }
   // legacy DTA: first byte is a version 104-115, byteorder 1/2
   if (b.length >= 2 && b[0] >= 104 && b[0] <= 116 && (b[1] === 1 || b[1] === 2)) return "dta";
   // SAS7BDAT magic
@@ -198,7 +207,7 @@ export function readDta(data: Uint8Array, options?: ReadOptions): Dataset {
 
 // ---- writing ----
 
-export type WritableFormat = "sav" | "zsav" | "dta" | "por";
+export type WritableFormat = "sav" | "zsav" | "dta" | "por" | "xport";
 
 export interface WriteVariable {
   name: string;
@@ -239,6 +248,7 @@ const WRITERS: Record<WritableFormat, BeginFn> = {
   zsav: beginWritingSav,
   dta: beginWritingDta,
   por: beginWritingPor,
+  xport: beginWritingXport,
 };
 
 function checkErr(code: ReadStatError): void {
@@ -362,4 +372,10 @@ export function writePor(spec: WriteSpec): Uint8Array {
 }
 export function readPor(data: Uint8Array, options?: ReadOptions): Dataset {
   return readData("por", data, options);
+}
+export function writeXport(spec: WriteSpec): Uint8Array {
+  return writeData("xport", spec);
+}
+export function readXport(data: Uint8Array, options?: ReadOptions): Dataset {
+  return readData("xport", data, options);
 }

@@ -39,6 +39,8 @@ export { parsePor } from "./spss/por-read.js";
 export { beginWritingPor } from "./spss/por-write.js";
 export { parseDta } from "./stata/dta-read.js";
 export { beginWritingDta } from "./stata/dta-write.js";
+export { parseXport } from "./sas/xport-read.js";
+export { beginWritingXport } from "./sas/xport-write.js";
 
 // High-level API
 export {
@@ -46,12 +48,14 @@ export {
   readSav,
   readDta,
   readPor,
+  readXport,
   detectFormat,
   writeData,
   writeSav,
   writeZsav,
   writeDta,
   writePor,
+  writeXport,
   type Dataset,
   type DatasetVariable,
   type CellValue,
