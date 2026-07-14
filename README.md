@@ -15,7 +15,7 @@ correctly here).
 | --- | --- | :---: | :---: |
 | SPSS | `.sav` | ✅ | ✅ |
 | SPSS compressed | `.zsav` | ✅ | ✅ |
-| SPSS portable | `.por` | 🚧 | 🚧 |
+| SPSS portable | `.por` | ✅ | ✅ |
 | Stata | `.dta` (v104–119) | ✅ | ✅ |
 | SAS database | `.sas7bdat` | 🚧 | 🚧 |
 | SAS catalog | `.sas7bcat` | 🚧 | 🚧 |
