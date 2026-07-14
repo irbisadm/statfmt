@@ -6,10 +6,18 @@
 import { ReadStatError, ReadStatException } from "../errors.js";
 import { IoContext, ioReadExact } from "../io.js";
 import { ReadStatSeek } from "../types.js";
+import type { Writer } from "../writer.js";
+import { machineIsLittleEndian } from "../bits.js";
 
 export const SAS_ENDIAN_BIG = 0x00;
 export const SAS_ENDIAN_LITTLE = 0x01;
+export const SAS_ALIGNMENT_OFFSET_0 = 0x22;
 export const SAS_ALIGNMENT_OFFSET_4 = 0x33;
+export const SAS_FILE_FORMAT_UNIX = 0x31; // '1'
+export const SAS_DEFAULT_FILE_VERSION = 9;
+const SAS_FILE_HEADER_SIZE_32BIT = 1024;
+const SAS_FILE_HEADER_SIZE_64BIT = 8192;
+const SAS_DEFAULT_PAGE_SIZE = 4096;
 
 export const SAS_COLUMN_TYPE_NUM = 0x01;
 export const SAS_COLUMN_TYPE_CHR = 0x02;
@@ -204,4 +212,91 @@ function latinStr(b: Uint8Array, off: number, len: number): string {
 
 export function sasSubheaderRemainder(len: number, signatureLen: number): number {
   return len - (4 + 2 * signatureLen);
+}
+
+// ---- writer-side header helpers ----
+
+export function sasHeaderInfoInit(writer: Writer, is64bit: boolean): SasHeaderInfo {
+  const hinfo: SasHeaderInfo = {
+    littleEndian: machineIsLittleEndian(), u64: is64bit, vendor: READSTAT_VENDOR_SAS,
+    majorVersion: 0, minorVersion: 0, revision: 0, pad1: 0, pageSize: SAS_DEFAULT_PAGE_SIZE,
+    pageHeaderSize: 0, subheaderPointerSize: 0, pageCount: 0, headerSize: 0,
+    creationTime: writer.timestamp, modificationTime: writer.timestamp,
+    tableName: new Uint8Array(32), encoding: "UTF-8",
+  };
+  if (is64bit) {
+    hinfo.headerSize = SAS_FILE_HEADER_SIZE_64BIT;
+    hinfo.pageHeaderSize = SAS_PAGE_HEADER_SIZE_64BIT;
+    hinfo.subheaderPointerSize = SAS_SUBHEADER_POINTER_SIZE_64BIT;
+  } else {
+    hinfo.headerSize = SAS_FILE_HEADER_SIZE_32BIT;
+    hinfo.pageHeaderSize = SAS_PAGE_HEADER_SIZE_32BIT;
+    hinfo.subheaderPointerSize = SAS_SUBHEADER_POINTER_SIZE_32BIT;
+  }
+  return hinfo;
+}
+
+/** Build the 164-byte header_start block. */
+export function sasBuildHeaderStart(magic: Uint8Array, u64: boolean, encoding: number): Uint8Array {
+  const b = new Uint8Array(164);
+  b.set(magic.subarray(0, 32), 0);
+  b[32] = u64 ? SAS_ALIGNMENT_OFFSET_4 : SAS_ALIGNMENT_OFFSET_0; // a2
+  b[35] = SAS_ALIGNMENT_OFFSET_0; // a1
+  b[37] = machineIsLittleEndian() ? SAS_ENDIAN_LITTLE : SAS_ENDIAN_BIG;
+  b[39] = SAS_FILE_FORMAT_UNIX;
+  b[70] = encoding;
+  b.set(latinBytes("SAS FILE"), 84); // file_type
+  b.set(latinBytes("DATA    "), 156); // file_info
+  return b;
+}
+
+function latinBytes(s: string): Uint8Array {
+  const out = new Uint8Array(s.length);
+  for (let i = 0; i < s.length; i++) out[i] = s.charCodeAt(i) & 0xff;
+  return out;
+}
+
+export function sasWriteHeader(writer: Writer, hinfo: SasHeaderInfo, headerStart: Uint8Array): ReadStatError {
+  const epoch = -3653 * 86400;
+  const hs = headerStart.slice();
+  // table_name at 92-123
+  hs.fill(0x20, 92, 124);
+  const tn = writer.tableName ? latinBytes(writer.tableName) : latinBytes("DATASET");
+  hs.set(tn.subarray(0, Math.min(tn.length, 32)), 92);
+  let e = writer.writeBytes(hs);
+  if (e !== ReadStatError.OK) return e;
+  if ((e = writer.writeZeros(hinfo.pad1)) !== ReadStatError.OK) return e;
+
+  const times = new Uint8Array(16);
+  const tdv = new DataView(times.buffer);
+  tdv.setFloat64(0, hinfo.creationTime - epoch, true);
+  tdv.setFloat64(8, hinfo.modificationTime - epoch, true);
+  if ((e = writer.writeBytes(times)) !== ReadStatError.OK) return e;
+  if ((e = writer.writeZeros(16)) !== ReadStatError.OK) return e;
+
+  const sizes = new Uint8Array(8);
+  const sdv = new DataView(sizes.buffer);
+  sdv.setUint32(0, hinfo.headerSize, true);
+  sdv.setUint32(4, hinfo.pageSize, true);
+  if ((e = writer.writeBytes(sizes)) !== ReadStatError.OK) return e;
+
+  const pc = new Uint8Array(hinfo.u64 ? 8 : 4);
+  if (hinfo.u64) new DataView(pc.buffer).setBigUint64(0, BigInt(hinfo.pageCount), true);
+  else new DataView(pc.buffer).setUint32(0, hinfo.pageCount, true);
+  if ((e = writer.writeBytes(pc)) !== ReadStatError.OK) return e;
+  if ((e = writer.writeZeros(8)) !== ReadStatError.OK) return e;
+
+  const headerEnd = new Uint8Array(120);
+  const release = `${writer.version % 10}.0101M0`;
+  headerEnd.set(latinBytes(release).subarray(0, 8), 0);
+  headerEnd.set(latinBytes("9.0401M6Linux"), 8); // host
+  if ((e = writer.writeBytes(headerEnd)) !== ReadStatError.OK) return e;
+
+  return writer.writeZeros(hinfo.headerSize - writer.bytesWritten);
+}
+
+export function sasFillPage(writer: Writer, hinfo: SasHeaderInfo): ReadStatError {
+  const rem = (writer.bytesWritten - hinfo.headerSize) % hinfo.pageSize;
+  if (rem) return writer.writeZeros(hinfo.pageSize - rem);
+  return ReadStatError.OK;
 }

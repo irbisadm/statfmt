@@ -24,6 +24,7 @@ import { beginWritingDta } from "./stata/dta-write.js";
 import { parseXport } from "./sas/xport-read.js";
 import { beginWritingXport } from "./sas/xport-write.js";
 import { parseSas7bdat } from "./sas/sas7bdat-read.js";
+import { beginWritingSas7bdat } from "./sas/sas7bdat-write.js";
 
 export type CellValue = number | string | null;
 
@@ -209,7 +210,7 @@ export function readDta(data: Uint8Array, options?: ReadOptions): Dataset {
 
 // ---- writing ----
 
-export type WritableFormat = "sav" | "zsav" | "dta" | "por" | "xport";
+export type WritableFormat = "sav" | "zsav" | "dta" | "por" | "xport" | "sas7bdat";
 
 export interface WriteVariable {
   name: string;
@@ -251,6 +252,7 @@ const WRITERS: Record<WritableFormat, BeginFn> = {
   dta: beginWritingDta,
   por: beginWritingPor,
   xport: beginWritingXport,
+  sas7bdat: beginWritingSas7bdat,
 };
 
 function checkErr(code: ReadStatError): void {
@@ -383,4 +385,7 @@ export function readXport(data: Uint8Array, options?: ReadOptions): Dataset {
 }
 export function readSas7bdat(data: Uint8Array, options?: ReadOptions): Dataset {
   return readData("sas7bdat", data, options);
+}
+export function writeSas7bdat(spec: WriteSpec): Uint8Array {
+  return writeData("sas7bdat", spec);
 }

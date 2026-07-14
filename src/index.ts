@@ -42,6 +42,7 @@ export { beginWritingDta } from "./stata/dta-write.js";
 export { parseXport } from "./sas/xport-read.js";
 export { beginWritingXport } from "./sas/xport-write.js";
 export { parseSas7bdat } from "./sas/sas7bdat-read.js";
+export { beginWritingSas7bdat } from "./sas/sas7bdat-write.js";
 
 // High-level API
 export {
@@ -58,6 +59,7 @@ export {
   writeDta,
   writePor,
   writeXport,
+  writeSas7bdat,
   type Dataset,
   type DatasetVariable,
   type CellValue,
