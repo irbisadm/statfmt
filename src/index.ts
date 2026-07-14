@@ -41,6 +41,7 @@ export { parseDta } from "./stata/dta-read.js";
 export { beginWritingDta } from "./stata/dta-write.js";
 export { parseXport } from "./sas/xport-read.js";
 export { beginWritingXport } from "./sas/xport-write.js";
+export { parseSas7bdat } from "./sas/sas7bdat-read.js";
 
 // High-level API
 export {
@@ -49,6 +50,7 @@ export {
   readDta,
   readPor,
   readXport,
+  readSas7bdat,
   detectFormat,
   writeData,
   writeSav,

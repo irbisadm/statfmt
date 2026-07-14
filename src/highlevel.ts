@@ -23,6 +23,7 @@ import { parseDta } from "./stata/dta-read.js";
 import { beginWritingDta } from "./stata/dta-write.js";
 import { parseXport } from "./sas/xport-read.js";
 import { beginWritingXport } from "./sas/xport-write.js";
+import { parseSas7bdat } from "./sas/sas7bdat-read.js";
 
 export type CellValue = number | string | null;
 
@@ -65,6 +66,7 @@ const PARSERS: Partial<Record<ReadableFormat, ParseFn>> = {
   dta: parseDta,
   por: parsePor,
   xport: parseXport,
+  sas7bdat: parseSas7bdat,
 };
 
 export interface ReadOptions {
@@ -194,7 +196,7 @@ export function detectFormat(data: Uint8Array): ReadableFormat | null {
   if (b.length >= 2 && b[0] >= 104 && b[0] <= 116 && (b[1] === 1 || b[1] === 2)) return "dta";
   // SAS7BDAT magic
   const sasMagic = [0xc2, 0xea, 0x81, 0x60, 0xb3, 0x14, 0x11, 0xcf];
-  if (b.length >= 8 && sasMagic.every((x, i) => b[i] === x)) return "sas7bdat";
+  if (b.length >= 32 && sasMagic.every((x, i) => b[12 + i] === x)) return "sas7bdat";
   return null;
 }
 
@@ -378,4 +380,7 @@ export function writeXport(spec: WriteSpec): Uint8Array {
 }
 export function readXport(data: Uint8Array, options?: ReadOptions): Dataset {
   return readData("xport", data, options);
+}
+export function readSas7bdat(data: Uint8Array, options?: ReadOptions): Dataset {
+  return readData("sas7bdat", data, options);
 }
