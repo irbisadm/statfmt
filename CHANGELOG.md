@@ -2,6 +2,13 @@
 
 This file is generated automatically from [Conventional Commits](https://www.conventionalcommits.org/) by [semantic-release](https://github.com/semantic-release/semantic-release) on every release from `main`.
 
+## [0.1.1](https://github.com/irbisadm/statfmt/compare/v0.1.0...v0.1.1) (2026-07-14)
+
+
+### Bug Fixes
+
+* correct project author to Igor Sheko ([71e42d3](https://github.com/irbisadm/statfmt/commit/71e42d393e28213cd392bb20ef38bb6f9449fc68))
+
 ## 0.1.0 (2026-07-14)
 
 Initial release — a TypeScript port of [ReadStat](https://github.com/WizardMac/ReadStat) with no native dependencies.

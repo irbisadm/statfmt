@@ -1,6 +1,6 @@
 {
   "name": "@irbisadm/statfmt",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "TypeScript port of ReadStat — read and write SPSS (.sav/.zsav/.por), Stata (.dta), and SAS (.sas7bdat/.sas7bcat/.xpt) data files. No native dependencies.",
   "type": "module",
   "main": "./dist/index.js",
