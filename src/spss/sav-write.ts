@@ -41,6 +41,7 @@ import {
 } from "./sav.js";
 import { savCompressedRowBound, savCompressRow } from "./sav-compress.js";
 import { PRODUCT_URL } from "./product.js";
+import { ZsavCtx, zsavWriteCompressedRow, zsavEndData } from "./zsav-write.js";
 
 const MAX_STRING_SIZE = 255;
 const MAX_LABEL_SIZE = 256;
@@ -802,6 +803,8 @@ function savBeginData(writer: Writer): ReadStatError {
   }
   if (writer.compression === ReadStatCompress.ROWS) {
     writer.moduleCtx = new Uint8Array(savCompressedRowBound(writer.rowLen));
+  } else if (writer.compression === ReadStatCompress.BINARY) {
+    writer.moduleCtx = new ZsavCtx(savCompressedRowBound(writer.rowLen), writer.bytesWritten);
   }
   return retval;
 }
@@ -845,8 +848,8 @@ export function beginWritingSav(writer: Writer, userCtx: unknown, rowCount: numb
   if (writer.compression === ReadStatCompress.ROWS) {
     writer.callbacks.writeRow = (w, row) => savWriteCompressedRow(w, row);
   } else if (writer.compression === ReadStatCompress.BINARY) {
-    // ZSAV — wired up in the zsav module
-    return ReadStatError.ERROR_UNSUPPORTED_COMPRESSION;
+    writer.callbacks.writeRow = (w, row) => zsavWriteCompressedRow(w, row);
+    writer.callbacks.endData = (w) => zsavEndData(w);
   } else if (writer.compression === ReadStatCompress.NONE) {
     /* void — default row writer */
   } else {

@@ -49,6 +49,7 @@ import {
 import { SavRowStream, SavRowStreamStatus, savDecompressRow } from "./sav-compress.js";
 import { savParseTime, savParseDate, makeTm } from "./sav-parse-timestamp.js";
 import { parseMrString } from "./sav-parse-mr.js";
+import { inflateSync } from "node:zlib";
 
 const LABEL_NAME_PREFIX = "labels";
 const VERY_LONG_STRING_MAX_LENGTH = 0x7fffffff;
@@ -874,6 +875,80 @@ function readCompressedData(ctx: SavReadCtx): void {
   }
 }
 
+function readBinaryCompressedData(ctx: SavReadCtx): void {
+  const uncompressedRowLen = ctx.varOffset * 8;
+  const uncompressedRow = new Uint8Array(uncompressedRowLen);
+  let uncompressedOffset = 0;
+
+  // zheader: zheader_ofs, ztrailer_ofs, ztrailer_len (3x uint64)
+  const zheaderBytes = ctx.bytes(24);
+  const zdv = new DataView(zheaderBytes.buffer, zheaderBytes.byteOffset, 24);
+  const zheaderOfs = zdv.getBigUint64(0, ctx.le);
+  const ztrailerOfs = zdv.getBigUint64(8, ctx.le);
+  const ztrailerLen = zdv.getBigUint64(16, ctx.le);
+
+  if (Number(zheaderOfs) !== ctx.io.tell() - 24) throw new ReadStatException(ReadStatError.ERROR_PARSE);
+
+  const nBlocks = Number((ztrailerLen - 24n) / 24n);
+  ctx.seekSet(Number(ztrailerOfs));
+
+  const trailerHead = ctx.bytes(24);
+  const tdv = new DataView(trailerHead.buffer, trailerHead.byteOffset, 24);
+  const trailerNBlocks = tdv.getInt32(20, ctx.le);
+  if (nBlocks !== trailerNBlocks) throw new ReadStatException(ReadStatError.ERROR_PARSE);
+
+  interface Entry {
+    compressedOfs: number;
+    uncompressedSize: number;
+    compressedSize: number;
+  }
+  const entries: Entry[] = [];
+  if (nBlocks > 0) {
+    const entriesBytes = ctx.bytes(nBlocks * 24);
+    const edv = new DataView(entriesBytes.buffer, entriesBytes.byteOffset, entriesBytes.byteLength);
+    for (let i = 0; i < nBlocks; i++) {
+      const base = i * 24;
+      entries.push({
+        compressedOfs: Number(edv.getBigInt64(base + 8, ctx.le)),
+        uncompressedSize: edv.getInt32(base + 16, ctx.le),
+        compressedSize: edv.getInt32(base + 20, ctx.le),
+      });
+    }
+  }
+
+  const state = new SavRowStream(ctx.missingDouble, ctx.bias, ctx.le);
+  state.setOutput(uncompressedRow);
+
+  for (let blockI = 0; blockI < nBlocks; blockI++) {
+    const entry = entries[blockI];
+    ctx.seekSet(entry.compressedOfs);
+    const compressed = ctx.bytes(entry.compressedSize);
+    const uncompressed = new Uint8Array(inflateSync(compressed));
+    if (uncompressed.length !== entry.uncompressedSize) throw new ReadStatException(ReadStatError.ERROR_PARSE);
+
+    state.status = SavRowStreamStatus.HAVE_DATA;
+    let dataOffset = 0;
+    while ((state.status as SavRowStreamStatus) !== SavRowStreamStatus.NEED_DATA) {
+      state.setInput(uncompressed.subarray(dataOffset));
+      state.out = uncompressedRow;
+      state.outPos = uncompressedOffset;
+      state.avail_out = uncompressedRowLen - uncompressedOffset;
+
+      savDecompressRow(state);
+
+      uncompressedOffset = state.outPos;
+      dataOffset = uncompressed.length - state.avail_in;
+
+      if ((state.status as SavRowStreamStatus) === SavRowStreamStatus.FINISHED_ROW) {
+        processRow(ctx, uncompressedRow.slice());
+        uncompressedOffset = 0;
+      }
+      if ((state.status as SavRowStreamStatus) === SavRowStreamStatus.FINISHED_ALL) return;
+      if (ctx.rowLimit > 0 && ctx.currentRow === ctx.rowLimit) return;
+    }
+  }
+}
+
 function readData(ctx: SavReadCtx): void {
   let longestString = 256;
   for (let i = 0; i < ctx.varIndex; ) {
@@ -887,7 +962,7 @@ function readData(ctx: SavReadCtx): void {
   if (ctx.compression === ReadStatCompress.ROWS) {
     readCompressedData(ctx);
   } else if (ctx.compression === ReadStatCompress.BINARY) {
-    throw new ReadStatException(ReadStatError.ERROR_UNSUPPORTED_COMPRESSION);
+    readBinaryCompressedData(ctx);
   } else {
     readUncompressedData(ctx);
   }
