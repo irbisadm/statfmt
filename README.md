@@ -17,8 +17,8 @@ correctly here).
 | SPSS compressed | `.zsav` | ✅ | ✅ |
 | SPSS portable | `.por` | ✅ | ✅ |
 | Stata | `.dta` (v104–119) | ✅ | ✅ |
-| SAS database | `.sas7bdat` | 🚧 | 🚧 |
-| SAS catalog | `.sas7bcat` | 🚧 | 🚧 |
+| SAS database | `.sas7bdat` | ✅ | ✅ |
+| SAS catalog | `.sas7bcat` | ✅ | ✅ |
 | SAS transport | `.xpt` (v5/v8) | ✅ | ✅ |
 
 ✅ ported & tested · 🚧 in progress
