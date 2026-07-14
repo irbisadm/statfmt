@@ -218,11 +218,11 @@ function interpretDouble(ctx: DtaReadCtx, buf: Uint8Array, off: number): ReadSta
 // ---- header parsing ----
 
 function readLegacyHeader(ctx: DtaReadCtx): { dsFormat: number; byteorder: number; nvar: number; nobs: number } {
-  const h = ctx.bytes(8); // ds_format, byteorder, filetype, unused, nvar(u16), nobs(u32)
+  const h = ctx.bytes(10); // ds_format, byteorder, filetype, unused, nvar(u16), nobs(u32)
   const dsFormat = h[0];
   const byteorder = h[1];
   const le = byteorder === DTA_LOHI;
-  const dv = new DataView(h.buffer, h.byteOffset, 8);
+  const dv = new DataView(h.buffer, h.byteOffset, 10);
   const nvar = dv.getUint16(4, le);
   const nobs = dv.getUint32(6, le);
   return { dsFormat, byteorder, nvar, nobs };
