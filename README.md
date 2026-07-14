@@ -23,6 +23,11 @@ correctly here).
 
 ✅ ported & tested · 🚧 in progress
 
+Plain-text data with an external schema is also supported: **Stata dictionary**
+(`.dct`), **SPSS command** (`.sps`, `DATA LIST` / `VALUE LABELS` / `VARIABLE
+LABELS`), and **SAS command** (`.sas`, `INPUT` / `INFILE` / `LABEL` / `FORMAT` /
+`VALUE`) files, read via `readTxt()`.
+
 ## Install
 
 ```bash
@@ -109,6 +114,16 @@ parseSav(parser, new BufferIoContext(bytes), null);
 
 The `Writer` class exposes the incremental writer API
 (`addVariable`, `beginRow`, `insertDoubleValue`, `endRow`, …).
+
+### Plain-text with a schema
+
+```ts
+import { readTxt } from "readstat-ts";
+
+const data = new Uint8Array(await readFile("data.txt"));
+const schema = new Uint8Array(await readFile("layout.dct"));
+const ds = readTxt(data, schema, "stata"); // "stata" | "spss" | "sas"
+```
 
 ## Character encodings
 
