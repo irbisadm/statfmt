@@ -1,6 +1,6 @@
-# @irbisadm/readstat-ts
+# @irbisadm/statfmt
 
-[![npm](https://img.shields.io/npm/v/@irbisadm/readstat-ts.svg)](https://www.npmjs.com/package/@irbisadm/readstat-ts)
+[![npm](https://img.shields.io/npm/v/@irbisadm/statfmt.svg)](https://www.npmjs.com/package/@irbisadm/statfmt)
 [![license](https://img.shields.io/badge/license-MIT-blue.svg)](./LICENSE)
 [![types](https://img.shields.io/badge/types-TypeScript-blue.svg)](#)
 [![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-yellow.svg)](https://conventionalcommits.org)
@@ -39,7 +39,7 @@ from ReadStat.
 ## Install
 
 ```bash
-npm install @irbisadm/readstat-ts
+npm install @irbisadm/statfmt
 ```
 
 **ESM-only**, requires **Node 18+** (uses the built-in `TextDecoder` for
@@ -52,7 +52,7 @@ the browser too; supply a custom `Codec` / zlib shim for the rest.
 
 ```ts
 import { readFile } from "node:fs/promises";
-import { readSav, readDta, readData, detectFormat } from "@irbisadm/readstat-ts";
+import { readSav, readDta, readData, detectFormat } from "@irbisadm/statfmt";
 
 const bytes = new Uint8Array(await readFile("survey.sav"));
 const ds = readSav(bytes);
@@ -77,7 +77,7 @@ readDta(bytes, { inputEncoding: "WINDOWS-1251", rowLimit: 100, rowOffset: 0 });
 ### Writing
 
 ```ts
-import { writeSav, writeDta, ReadStatType, ReadStatMeasure } from "@irbisadm/readstat-ts";
+import { writeSav, writeDta, ReadStatType, ReadStatMeasure } from "@irbisadm/statfmt";
 
 const bytes = writeSav({
   fileLabel: "My dataset",
@@ -109,7 +109,7 @@ The high-level helpers are built on the same callback API as C ReadStat, exposed
 for when you want to stream millions of rows without materializing them:
 
 ```ts
-import { ReadStatParser, BufferIoContext, parseSav } from "@irbisadm/readstat-ts";
+import { ReadStatParser, BufferIoContext, parseSav } from "@irbisadm/statfmt";
 
 const parser = new ReadStatParser();
 parser.setMetadataHandler((md) => console.log(md.rowCount, md.varCount));
@@ -126,7 +126,7 @@ The `Writer` class exposes the incremental writer API
 ### Plain-text with a schema
 
 ```ts
-import { readTxt } from "@irbisadm/readstat-ts";
+import { readTxt } from "@irbisadm/statfmt";
 
 const data = new Uint8Array(await readFile("data.txt"));
 const schema = new Uint8Array(await readFile("layout.dct"));
@@ -199,7 +199,7 @@ rather than hope.
 
 ## Relationship to ReadStat
 
-`@irbisadm/readstat-ts` is a **port**, not an original work. It re-implements
+`@irbisadm/statfmt` is a **port**, not an original work. It re-implements
 [ReadStat](https://github.com/WizardMac/ReadStat) in TypeScript:
 
 - the streaming, callback-based parser/writer architecture mirrors ReadStat's

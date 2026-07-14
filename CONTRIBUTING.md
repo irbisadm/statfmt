@@ -1,6 +1,6 @@
 # Contributing
 
-Thanks for your interest in `@irbisadm/readstat-ts`. This project is a
+Thanks for your interest in `@irbisadm/statfmt`. This project is a
 TypeScript **port** of [ReadStat](https://github.com/WizardMac/ReadStat); please
 keep that framing in mind — changes should stay faithful to the upstream
 behavior unless there is a clear, documented reason to diverge.

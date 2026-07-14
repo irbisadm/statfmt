@@ -1,5 +1,5 @@
 //
-// @irbisadm/readstat-ts — TypeScript port of ReadStat
+// @irbisadm/statfmt — TypeScript port of ReadStat
 //
 // Read and write SPSS (.sav/.zsav/.por), Stata (.dta) and SAS
 // (.sas7bdat/.sas7bcat/.xpt) data files.

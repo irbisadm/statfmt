@@ -45,7 +45,7 @@ export function requireReference(): string {
 }
 
 export function makeTmpDir(): string {
-  return mkdtempSync(join(tmpdir(), "readstat-ts-"));
+  return mkdtempSync(join(tmpdir(), "statfmt-"));
 }
 
 /** Run the reference CLI, returning stdout as a Buffer. */

@@ -1,5 +1,5 @@
 {
-  "name": "@irbisadm/readstat-ts",
+  "name": "@irbisadm/statfmt",
   "version": "0.0.0-development",
   "description": "TypeScript port of ReadStat — read and write SPSS (.sav/.zsav/.por), Stata (.dta), and SAS (.sas7bdat/.sas7bcat/.xpt) data files. No native dependencies.",
   "type": "module",
@@ -33,13 +33,13 @@
   ],
   "author": "irbisadm <i@irbisadm.dev>",
   "license": "MIT",
-  "homepage": "https://github.com/irbisadm/readstat-ts#readme",
+  "homepage": "https://github.com/irbisadm/statfmt#readme",
   "repository": {
     "type": "git",
-    "url": "git+https://github.com/irbisadm/readstat-ts.git"
+    "url": "git+https://github.com/irbisadm/statfmt.git"
   },
   "bugs": {
-    "url": "https://github.com/irbisadm/readstat-ts/issues"
+    "url": "https://github.com/irbisadm/statfmt/issues"
   },
   "publishConfig": {
     "access": "public"

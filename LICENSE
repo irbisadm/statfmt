@@ -22,7 +22,7 @@ SOFTWARE.
 
 ================================================================================
 
-This project (readstat-ts) is a TypeScript port of ReadStat:
+This project (statfmt) is a TypeScript port of ReadStat:
 
     https://github.com/WizardMac/ReadStat
 
