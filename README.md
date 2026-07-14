@@ -252,7 +252,7 @@ and [Releasing](./CONTRIBUTING.md#releasing-maintainers) for the publisher setup
 
 ## License
 
-[MIT](./LICENSE) © 2026 irbisadm.
+[MIT](./LICENSE) © 2026 Igor Sheko.
 
 Derivative work of [ReadStat](https://github.com/WizardMac/ReadStat),
 © 2013–2016 Evan Miller and ReadStat contributors (MIT). ReadStat's original
