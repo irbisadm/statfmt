@@ -18,6 +18,7 @@ import { LabelSet } from "./labelset.js";
 import { parseSav } from "./spss/sav-read.js";
 import { beginWritingSav } from "./spss/sav-write.js";
 import { parsePor } from "./spss/por-read.js";
+import { beginWritingPor } from "./spss/por-write.js";
 import { parseDta } from "./stata/dta-read.js";
 import { beginWritingDta } from "./stata/dta-write.js";
 
@@ -197,7 +198,7 @@ export function readDta(data: Uint8Array, options?: ReadOptions): Dataset {
 
 // ---- writing ----
 
-export type WritableFormat = "sav" | "zsav" | "dta";
+export type WritableFormat = "sav" | "zsav" | "dta" | "por";
 
 export interface WriteVariable {
   name: string;
@@ -237,6 +238,7 @@ const WRITERS: Record<WritableFormat, BeginFn> = {
   sav: beginWritingSav,
   zsav: beginWritingSav,
   dta: beginWritingDta,
+  por: beginWritingPor,
 };
 
 function checkErr(code: ReadStatError): void {
@@ -354,4 +356,10 @@ export function writeZsav(spec: WriteSpec): Uint8Array {
 }
 export function writeDta(spec: WriteSpec): Uint8Array {
   return writeData("dta", spec);
+}
+export function writePor(spec: WriteSpec): Uint8Array {
+  return writeData("por", spec);
+}
+export function readPor(data: Uint8Array, options?: ReadOptions): Dataset {
+  return readData("por", data, options);
 }

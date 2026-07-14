@@ -35,6 +35,8 @@ export { Writer, stringRefInit, type StringRef, type WriterModuleCallbacks } fro
 // Streaming format entry points (low-level)
 export { parseSav } from "./spss/sav-read.js";
 export { beginWritingSav } from "./spss/sav-write.js";
+export { parsePor } from "./spss/por-read.js";
+export { beginWritingPor } from "./spss/por-write.js";
 export { parseDta } from "./stata/dta-read.js";
 export { beginWritingDta } from "./stata/dta-write.js";
 
@@ -43,11 +45,13 @@ export {
   readData,
   readSav,
   readDta,
+  readPor,
   detectFormat,
   writeData,
   writeSav,
   writeZsav,
   writeDta,
+  writePor,
   type Dataset,
   type DatasetVariable,
   type CellValue,
