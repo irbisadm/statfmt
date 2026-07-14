@@ -19,7 +19,7 @@ correctly here).
 | Stata | `.dta` (v104–119) | ✅ | ✅ |
 | SAS database | `.sas7bdat` | 🚧 | 🚧 |
 | SAS catalog | `.sas7bcat` | 🚧 | 🚧 |
-| SAS transport | `.xpt` | 🚧 | 🚧 |
+| SAS transport | `.xpt` (v5/v8) | ✅ | ✅ |
 
 ✅ ported & tested · 🚧 in progress
 
