@@ -3,7 +3,6 @@
 // (port of readstat_sav_compress.c)
 //
 
-import { byteswap8 } from "../bits.js";
 import { Writer } from "../writer.js";
 import { ReadStatType } from "../types.js";
 import { SAV_MISSING_DOUBLE } from "./spss.js";
@@ -103,14 +102,15 @@ export class SavRowStream {
 
   chunk = new Uint8Array(8);
   i = 8;
-  bswap: boolean;
+  /** File byte order: true = little-endian. */
+  le: boolean;
 
   status: SavRowStreamStatus = SavRowStreamStatus.NEED_DATA;
 
-  constructor(missingValue: bigint, bias: number, bswap: boolean) {
+  constructor(missingValue: bigint, bias: number, le: boolean) {
     this.missingValue = missingValue;
     this.bias = bias;
-    this.bswap = bswap;
+    this.le = le;
     this.nextIn = new Uint8Array(0);
     this.avail_in = 0;
     this.out = new Uint8Array(0);
@@ -131,9 +131,8 @@ export class SavRowStream {
 }
 
 export function savDecompressRow(state: SavRowStream): void {
-  const missingValue = state.bswap ? byteswap8(state.missingValue) : state.missingValue;
   const missingBytes = new Uint8Array(8);
-  new DataView(missingBytes.buffer).setBigUint64(0, missingValue, true);
+  new DataView(missingBytes.buffer).setBigUint64(0, state.missingValue, state.le);
   const outDv = new DataView(state.out.buffer, state.out.byteOffset, state.out.byteLength);
 
   let i = 8 - state.i;
@@ -178,16 +177,8 @@ export function savDecompressRow(state: SavRowStream): void {
           state.avail_out -= 8;
           break;
         default: {
-          let fpValue = code - state.bias;
-          if (state.bswap) {
-            // byteswap the double
-            const tmp = new DataView(new ArrayBuffer(8));
-            tmp.setFloat64(0, fpValue, true);
-            const swapped = byteswap8(tmp.getBigUint64(0, true));
-            tmp.setBigUint64(0, swapped, true);
-            fpValue = tmp.getFloat64(0, true);
-          }
-          outDv.setFloat64(state.outPos, fpValue, true);
+          const fpValue = code - state.bias;
+          outDv.setFloat64(state.outPos, fpValue, state.le);
           state.outPos += 8;
           state.avail_out -= 8;
           break;
