@@ -1,8 +1,13 @@
 //
-// readstat-ts — TypeScript port of ReadStat
+// @irbisadm/readstat-ts — TypeScript port of ReadStat
 //
 // Read and write SPSS (.sav/.zsav/.por), Stata (.dta) and SAS
 // (.sas7bdat/.sas7bcat/.xpt) data files.
+//
+// This is a derivative work (port) of ReadStat:
+//   https://github.com/WizardMac/ReadStat
+//   Copyright (c) 2013-2016 Evan Miller and ReadStat contributors (MIT).
+// See the LICENSE file for the full attribution and license notice.
 //
 
 export * from "./types.js";
