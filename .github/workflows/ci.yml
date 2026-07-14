@@ -47,43 +47,23 @@ jobs:
           --to "${{ github.event.pull_request.head.sha }}"
 
   preview-release:
-    name: preview next version (dry-run)
+    name: preview next version
     if: github.event_name == 'pull_request'
     runs-on: ubuntu-latest
     permissions:
       contents: read
     steps:
-      # Check out the PR head branch by name so semantic-release can treat it as
-      # a release branch and compute the version it *would* publish once merged.
+      # Check out the PR head branch with full history + tags so the last
+      # version tag and the commits since it are available.
       - uses: actions/checkout@v4
         with:
           repository: ${{ github.event.pull_request.head.repo.full_name }}
           ref: ${{ github.event.pull_request.head.ref }}
           fetch-depth: 0
-      # Node 22 to match semantic-release v25 used in the release workflow.
       - uses: actions/setup-node@v4
         with:
-          node-version: 22
-          cache: npm
-      - run: npm ci
-      - name: semantic-release --dry-run
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-          # On a pull_request event, env-ci resolves the branch to the merge ref
-          # (refs/pull/N/merge) and semantic-release refuses to run. Present it as
-          # a push to the PR's head branch so the next version actually resolves.
-          GITHUB_EVENT_NAME: push
-          GITHUB_REF: refs/heads/${{ github.event.pull_request.head.ref }}
-          HEAD_REF: ${{ github.event.pull_request.head.ref }}
-        run: |
-          set -o pipefail
-          npx semantic-release --dry-run --branches "$HEAD_REF" 2>&1 | tee sr.log || true
-          ver=$(grep -oE 'next release version is [0-9]+\.[0-9]+\.[0-9]+' sr.log \
-                | grep -oE '[0-9]+\.[0-9]+\.[0-9]+' | tail -1 || true)
-          if [ -n "$ver" ]; then
-            echo "### 📦 This PR would release \`v$ver\`" >> "$GITHUB_STEP_SUMMARY"
-          elif grep -q "no relevant changes" sr.log; then
-            echo "### 📦 No release: these commits don't trigger a version bump" >> "$GITHUB_STEP_SUMMARY"
-          else
-            echo "### ⚠️ Could not determine the next version — see the job log" >> "$GITHUB_STEP_SUMMARY"
-          fi
+          node-version: 20
+      # Self-contained bump computation (git + Node only) — avoids fighting
+      # semantic-release's PR/branch detection just to preview a version.
+      - name: Preview next version from Conventional Commits
+        run: node .github/scripts/next-version.mjs
