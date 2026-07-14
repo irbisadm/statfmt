@@ -44,6 +44,11 @@ export { beginWritingXport } from "./sas/xport-write.js";
 export { parseSas7bdat } from "./sas/sas7bdat-read.js";
 export { beginWritingSas7bdat } from "./sas/sas7bdat-write.js";
 export { parseSas7bcat, beginWritingSas7bcat } from "./sas/sas7bcat.js";
+export { parseTxt } from "./txt/txt-read.js";
+export { parseStataDictionary } from "./txt/stata-dictionary.js";
+export { parseSpssCommands } from "./txt/spss-commands.js";
+export { parseSasCommands } from "./txt/sas-commands.js";
+export { type Schema, type SchemaEntry } from "./txt/schema.js";
 
 // High-level API
 export {
@@ -61,6 +66,8 @@ export {
   writePor,
   writeXport,
   writeSas7bdat,
+  readTxt,
+  type SchemaFormat,
   type Dataset,
   type DatasetVariable,
   type CellValue,

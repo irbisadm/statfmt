@@ -25,6 +25,11 @@ import { parseXport } from "./sas/xport-read.js";
 import { beginWritingXport } from "./sas/xport-write.js";
 import { parseSas7bdat } from "./sas/sas7bdat-read.js";
 import { beginWritingSas7bdat } from "./sas/sas7bdat-write.js";
+import { parseTxt } from "./txt/txt-read.js";
+import { parseStataDictionary } from "./txt/stata-dictionary.js";
+import { parseSpssCommands } from "./txt/spss-commands.js";
+import { parseSasCommands } from "./txt/sas-commands.js";
+import type { Schema } from "./txt/schema.js";
 
 export type CellValue = number | string | null;
 
@@ -388,4 +393,98 @@ export function readSas7bdat(data: Uint8Array, options?: ReadOptions): Dataset {
 }
 export function writeSas7bdat(spec: WriteSpec): Uint8Array {
   return writeData("sas7bdat", spec);
+}
+
+// ---- plain-text data with an external schema ----
+
+export type SchemaFormat = "stata" | "spss" | "sas";
+
+/**
+ * Read a plain-text data file described by an external schema file
+ * (Stata dictionary `.dct`, SPSS command file `.sps`, or SAS command file
+ * `.sas`).
+ */
+export function readTxt(data: Uint8Array, schemaBytes: Uint8Array, schemaFormat: SchemaFormat, options: ReadOptions = {}): Dataset {
+  const parser = new ReadStatParser();
+  if (options.inputEncoding !== undefined) parser.setFileCharacterEncoding(options.inputEncoding);
+  if (options.rowLimit !== undefined) parser.setRowLimit(options.rowLimit);
+
+  let metadata: ReadStatMetadata | null = null;
+  const variables: DatasetVariable[] = [];
+  const rows: CellValue[][] = [];
+  const notes: string[] = [];
+  const valueLabelSets = new Map<string, ValueLabelPair[]>();
+  const varsByLabelName = new Map<string, DatasetVariable[]>();
+
+  parser.setMetadataHandler((m) => {
+    metadata = m;
+  });
+  parser.setVariableHandler((index, v: Variable, valLabels) => {
+    const dv: DatasetVariable = {
+      index,
+      name: v.getName() ?? "",
+      label: v.getLabel(),
+      type: v.type,
+      format: v.getFormat(),
+      measure: v.measure,
+      alignment: v.alignment,
+      displayWidth: v.displayWidth,
+      storageWidth: v.storageWidth,
+      valueLabelsName: valLabels,
+      valueLabels: null,
+      missingRanges: [],
+    };
+    variables[index] = dv;
+    if (valLabels) {
+      let arr = varsByLabelName.get(valLabels);
+      if (!arr) varsByLabelName.set(valLabels, (arr = []));
+      arr.push(dv);
+    }
+  });
+  parser.setValueHandler((obsIndex, v: Variable, value) => {
+    let row = rows[obsIndex];
+    if (!row) rows[obsIndex] = row = [];
+    row[v.index] = value.toJS();
+  });
+  parser.setValueLabelHandler((name, value, label) => {
+    let arr = valueLabelSets.get(name);
+    if (!arr) valueLabelSets.set(name, (arr = []));
+    arr.push({ value: value.toJS(), label });
+  });
+
+  let schema: Schema;
+  if (schemaFormat === "stata") schema = parseStataDictionary(parser, schemaBytes, null);
+  else if (schemaFormat === "spss") schema = parseSpssCommands(parser, schemaBytes, null);
+  else schema = parseSasCommands(parser, schemaBytes, null);
+
+  const code = parseTxt(parser, new BufferIoContext(data), schema, null);
+  if (code !== ReadStatError.OK) throw new ReadStatException(code, readstatErrorMessage(code) ?? undefined);
+
+  for (const [name, pairs] of valueLabelSets) {
+    const vars = varsByLabelName.get(name);
+    if (vars) for (const v of vars) v.valueLabels = pairs;
+  }
+
+  const md = metadata ?? { ...makeEmptyMd(), rowCount: rows.length, varCount: variables.length };
+  return {
+    metadata: md,
+    variables: variables.filter((v) => v !== undefined),
+    rows,
+    notes,
+    toObjects() {
+      return rows.map((row) => {
+        const obj: Record<string, CellValue> = {};
+        for (const v of variables) if (v) obj[v.name] = row[v.index] ?? null;
+        return obj;
+      });
+    },
+  };
+}
+
+function makeEmptyMd(): ReadStatMetadata {
+  return {
+    rowCount: -1, varCount: 0, creationTime: 0, modifiedTime: 0, fileFormatVersion: 0,
+    compression: ReadStatCompress.NONE, endianness: 0, tableName: null, fileLabel: null,
+    fileEncoding: null, is64bit: false, multipleResponseSets: [],
+  };
 }
