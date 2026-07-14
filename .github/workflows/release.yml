@@ -4,8 +4,10 @@ on:
   push:
     branches: [main]
 
-# semantic-release needs to push the changelog/version commit and the tag,
-# open/annotate the GitHub release, and (with provenance) mint an OIDC token.
+# semantic-release pushes the changelog/version commit + tag and opens the
+# GitHub release (contents/issues/PRs); id-token lets npm authenticate to the
+# registry via OIDC Trusted Publishing (no long-lived NPM_TOKEN) and mint
+# provenance attestations.
 permissions:
   contents: write
   issues: write
@@ -25,11 +27,16 @@ jobs:
         with:
           fetch-depth: 0
           persist-credentials: false
+      # Node 22 satisfies semantic-release v25; the registry URL is left to
+      # @semantic-release/npm so setup-node does not inject a token placeholder
+      # that would shadow OIDC.
       - uses: actions/setup-node@v4
         with:
-          node-version: 20
-          registry-url: https://registry.npmjs.org
+          node-version: 22
           cache: npm
+      # Trusted Publishing needs npm >= 11.5.1; Node 22 ships npm 10.x.
+      - name: Upgrade npm for Trusted Publishing (OIDC)
+        run: npm install -g npm@latest
       - name: Install reference build dependencies
         run: sudo apt-get update && sudo apt-get install -y build-essential zlib1g-dev
       - run: npm ci
@@ -40,6 +47,12 @@ jobs:
       - name: Release
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional fallback: only used if a NPM_TOKEN secret is present (e.g.
+          # to bootstrap the very first publish before Trusted Publishing can be
+          # configured). Otherwise publishing goes through OIDC.
+          HAS_NPM_TOKEN: ${{ secrets.NPM_TOKEN != '' }}
           NPM_TOKEN: ${{ secrets.NPM_TOKEN }}
           NPM_CONFIG_PROVENANCE: "true"
-        run: npx semantic-release
+        run: |
+          if [ "$HAS_NPM_TOKEN" != "true" ]; then unset NPM_TOKEN; fi
+          npx semantic-release

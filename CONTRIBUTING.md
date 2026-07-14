@@ -82,6 +82,39 @@ feat(api)!: rename readPor `inputEncoding` option to `encoding`
 BREAKING CHANGE: `inputEncoding` is now `encoding` across all readers.
 ```
 
+## Releasing (maintainers)
+
+Releases are cut automatically by [semantic-release](https://github.com/semantic-release/semantic-release)
+on every push to `main` (`.github/workflows/release.yml`). Publishing to npm uses
+**[Trusted Publishing (OIDC)](https://docs.npmjs.com/trusted-publishers)**, so no
+long-lived npm token lives in the repo and each release gets a signed provenance
+attestation. Requirements are already wired up: the workflow has
+`permissions: id-token: write`, runs on Node 22 and upgrades to npm ≥ 11.5.1
+(OIDC needs it).
+
+One-time setup on npmjs.com — **Package settings → Trusted Publisher → GitHub Actions**:
+
+| Field | Value |
+| --- | --- |
+| Organization or user | `irbisadm` |
+| Repository | `statfmt` |
+| Workflow filename | `release.yml` |
+| Environment | *(leave empty)* |
+| Allowed actions | `npm publish` |
+
+Because a trusted publisher can only be configured on a package that already
+exists, **bootstrap the very first release** one of two ways:
+
+1. **Temporary token** — add an `NPM_TOKEN` repository secret (an npm *Automation*
+   token). The release workflow uses it only when present, so the first push to
+   `main` publishes `0.1.0` and creates the package. Then configure the trusted
+   publisher above and **delete the `NPM_TOKEN` secret** — subsequent releases use
+   OIDC automatically.
+2. **Manual publish** — `npm publish --access public` once locally to create the
+   package, then configure the trusted publisher.
+
+After bootstrap, no secrets beyond the automatic `GITHUB_TOKEN` are needed.
+
 ## Attribution
 
 Substantial portions of this codebase are derived from ReadStat. If your change

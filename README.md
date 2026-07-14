@@ -243,8 +243,12 @@ Commits follow [Conventional Commits](https://www.conventionalcommits.org/), and
 **releases are fully automated**: pushing to `main` runs
 [semantic-release](https://github.com/semantic-release/semantic-release), which
 computes the next version, tags it, updates the changelog and publishes to npm —
-all derived from the commit messages. See
-[CONTRIBUTING.md](./CONTRIBUTING.md#commit-convention) for the format.
+all derived from the commit messages. Publishing uses npm
+[**Trusted Publishing (OIDC)**](https://docs.npmjs.com/trusted-publishers) — no
+long-lived npm token is stored, and every release ships a
+[provenance attestation](https://docs.npmjs.com/generating-provenance-statements).
+See [CONTRIBUTING.md](./CONTRIBUTING.md#commit-convention) for the commit format
+and [Releasing](./CONTRIBUTING.md#releasing-maintainers) for the publisher setup.
 
 ## License
 
